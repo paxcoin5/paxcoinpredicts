@@ -1,0 +1,38 @@
+import { useState, useEffect } from "react";
+import axios from "axios";
+import SportSelector from "../components/SportSelector";
+import GameSelector from "../components/GameSelector";
+import PredictionPanel from "../components/PredictionPanel";
+import PublicBetsPanel from "../components/PublicBetsPanel";
+import ContrarianSignal from "../components/ContrarianSignal";
+
+export default function Home() {
+  const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const [sport, setSport] = useState("NFL");
+  const [games, setGames] = useState({});
+  const [selectedGame, setSelectedGame] = useState("");
+  const [prediction, setPrediction] = useState(null);
+  const [publicBets, setPublicBets] = useState(null);
+
+  useEffect(() => {
+    if (!backendURL) return;
+    axios.get(`${backendURL}/games?sport=${sport}`).then(res => setGames(res.data));
+  }, [sport]);
+
+  useEffect(() => {
+    if (!selectedGame || !backendURL) return;
+    axios.get(`${backendURL}/prediction/${selectedGame}`).then(res => setPrediction(res.data));
+    axios.get(`${backendURL}/public-bets/${selectedGame}`).then(res => setPublicBets(res.data));
+  }, [selectedGame]);
+
+  return (
+    <div className="p-4">
+      <h1 className="text-3xl font-bold mb-4">PaxCoinPredicts</h1>
+      <SportSelector sport={sport} setSport={setSport} />
+      <GameSelector games={games} selectedGame={selectedGame} setSelectedGame={setSelectedGame} />
+      {prediction && <PredictionPanel prediction={prediction} />}
+      {publicBets && <PublicBetsPanel publicBets={publicBets} />}
+      {prediction && publicBets && <ContrarianSignal prediction={prediction} publicBets={publicBets} />}
+    </div>
+  );
+}
